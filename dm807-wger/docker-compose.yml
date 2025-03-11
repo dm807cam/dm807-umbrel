@@ -1,16 +1,15 @@
 services:
   app_proxy:
     environment:
-      APP_HOST: wger_web_1
-      APP_PORT: 8069
+      APP_HOST: web
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
 
   web:
     image: wger/server:master@sha256:20949e499d0c2f2822d37a01537a7ebc90f5d60552cc5eb2bc9e789492ea46ea
     depends_on:
-      db:
-        condition: service_healthy
-      cache:
-        condition: service_healthy
+      - db
+      - cache
     env_file:
       - ${APP_DATA_DIR}/config/prod.env
     volumes:
@@ -30,12 +29,6 @@ services:
       - ${APP_DATA_DIR}/data/media:/wger/media:ro
     expose:
       - 80
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     restart: unless-stopped
 
   db:
@@ -49,12 +42,6 @@ services:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data/
     expose:
       - 5432
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U wger"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     restart: unless-stopped
 
   cache:
@@ -63,12 +50,6 @@ services:
       - 6379
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
     restart: unless-stopped
 
   celery_worker:
@@ -79,14 +60,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/media:/home/wger/media
     depends_on:
-      web:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "celery -A wger inspect ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      - web
     restart: unless-stopped
 
   celery_beat:
@@ -97,8 +71,7 @@ services:
     env_file:
       - ${APP_DATA_DIR}/config/prod.env
     depends_on:
-      celery_worker:
-        condition: service_healthy
+      - celery_worker
     restart: unless-stopped
 
 volumes:
