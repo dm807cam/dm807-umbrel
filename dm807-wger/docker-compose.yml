@@ -1,4 +1,9 @@
 services:
+  app_proxy:
+    environment:
+      APP_HOST: wger_web_1
+      APP_PORT: 8069
+
   web:
     image: wger/server:master@sha256:20949e499d0c2f2822d37a01537a7ebc90f5d60552cc5eb2bc9e789492ea46ea
     depends_on:
